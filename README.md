@@ -1,2 +1,2 @@
 # zamg-weather-data
-A viszualization example for showing weather data using D3
+A visualization example for showing weather data using D3
