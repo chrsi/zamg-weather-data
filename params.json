@@ -1,0 +1,6 @@
+{
+  "name": "ZAMG weather data",
+  "tagline": "A visualization example for showing weather data using D3",
+  "body": "# zamg-weather-data\r\nA visualization example for showing weather data using D3\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
