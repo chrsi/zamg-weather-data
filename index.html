@@ -1,37 +1,120 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
+<head>
     <meta charset="UTF-8">
     <title>ZAMG weather data by meinsiedler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="assets/stylesheets/normalize.css" media="screen">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">ZAMG weather data</h1>
-      <h2 class="project-tagline">A visualization example for showing weather data using D3</h2>
-      <a href="https://github.com/meinsiedler/zamg-weather-data" class="btn">View on GitHub</a>
-      <a href="https://github.com/meinsiedler/zamg-weather-data/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/meinsiedler/zamg-weather-data/tarball/master" class="btn">Download .tar.gz</a>
+    <link rel="stylesheet" type="text/css" href="assets/stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="assets/stylesheets/github-light.css" media="screen">
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
+    <script src="assets/js/d3/d3.js"></script>
+</head>
+<body>
+
+<section class="page-header">
+    <h1 class="project-name">ZAMG weather data</h1>
+    <h2 class="project-tagline">A visualization example for showing weather data using D3</h2>
+    <a href="https://github.com/meinsiedler/zamg-weather-data" class="btn">View on GitHub</a>
+    <a href="https://github.com/meinsiedler/zamg-weather-data/zipball/master" class="btn">Download .zip</a>
+    <a href="https://github.com/meinsiedler/zamg-weather-data/tarball/master" class="btn">Download .tar.gz</a>
+</section>
+
+<section class="main-content">
+
+    <section class="temperature-trend">
+        <h2>Temperature Trend</h2>
+        <div id="temperature-trend-content"></div>
+
+        <script type="text/javascript">
+
+            const margin = {top: 0, bottom: 1, left: 20, right: 0};
+
+            const width = 800 - margin.left - margin.right;
+            const height = 600 - margin.top - margin.bottom;
+
+            const svg = d3.select('#temperature-trend-content').append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            var data;
+
+            const parseDateTime = d3.timeParse("%d-%m-%Y %H:%M");
+
+            const xscale = d3.scaleTime()
+                .rangeRound([0, width]);
+            const yscale = d3.scaleLinear()
+                .rangeRound([height, 0]);
+
+            const xaxis = d3.axisTop().scale(xscale);
+            const g_xaxis = g.append('g')
+                .attr('class','x axis')
+                .attr("transform", `translate(0,${height - margin.bottom - margin.top})`);
+
+            const yaxis = d3.axisLeft().scale(yscale);
+            const g_yaxis = g.append('g')
+                .attr('class','y axis');
+
+            const line = d3.line()
+                .x(d => xscale(d.date))
+                .y(d => yscale(d.temperature));
+
+            d3.csv("data/weather.csv", row => {
+                row.date = parseDateTime(row.date);
+                row.temperature = +row.temperature;
+                return row;
+            },
+            (error, data) => {
+                if(error) throw error;
+
+                this.data = data;
+                updateTemperature(this.data);
+            });
+
+            function updateTemperature(newData) {
+                xscale.domain([d3.min(newData, d => d.date), d3.max(newData, d => d.date)]);
+                yscale.domain([d3.min(newData, d => d.temperature), d3.max(newData, d => d.temperature)]);
+
+                g_xaxis.call(xaxis);
+                g_yaxis.call(yaxis);
+
+                g.append("path")
+                    .datum(data)
+                    .attr("class", "line")
+                    .attr("d", line);
+
+// TODO: switch to DATA JOIN, ENTER, UPDATE, EXIT pattern
+//                const path = g.append('path').datum(newData, d => d.temperature);
+//
+//                const path_enter = path.enter()//.append('path')
+//                    .attr("class", "line");
+//                    //.attr("class", "temperature-line");
+//
+//                path.merge(path_enter)
+//                    .attr("d", line);
+//
+//                path.exit().remove();
+            }
+
+        </script>
     </section>
 
-    <section class="main-content">
-      <h1>
-<a id="zamg-weather-data" class="anchor" href="#zamg-weather-data" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>zamg-weather-data</h1>
 
-<p>A visualization example for showing weather data using D3</p>
+    <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/meinsiedler/zamg-weather-data">ZAMG weather data</a> is maintained by <a
+                href="https://github.com/meinsiedler">meinsiedler</a>.</span>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/meinsiedler/zamg-weather-data">ZAMG weather data</a> is maintained by <a href="https://github.com/meinsiedler">meinsiedler</a>.</span>
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a
+                href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a
+                href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+    </footer>
 
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
-      </footer>
+</section>
 
-    </section>
 
-  
-  </body>
+</body>
 </html>
