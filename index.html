@@ -24,12 +24,22 @@
 <section class="main-content">
 
     <section class="temperature-trend">
-        <h2>Temperature Trend</h2>
+        <h2>Trends</h2>
+
+        <div id="selection">
+            <select id="trend-type-select">
+                <option value="temperature">Temperature</option>
+                <option value="dewPoint">Dew Point</option>
+                <option value="rain">Rain</option>
+                <option value="sun">Sun</option>
+            </select>
+        </div>
+
         <div id="temperature-trend-content"></div>
 
         <script type="text/javascript">
 
-            const margin = {top: 0, bottom: 1, left: 20, right: 0};
+            const margin = {top: 0, bottom: 1, left: 25, right: 0};
 
             const width = 1200 - margin.left - margin.right;
             const height = 600 - margin.top - margin.bottom;
@@ -59,49 +69,58 @@
             const g_yaxis = g.append('g')
                 .attr('class','y axis');
 
-            const line = d3.line()
-                .x(d => xscale(d.date))
-                .y(d => yscale(d.temperature));
+            function getScaledLine(selectorFunc) {
+                return d3.line()
+                    .x(d => xscale(d.date))
+                    .y(d => yscale(selectorFunc(d)));
+            }
 
             d3.csv("data/all.csv", type,
             (error, data) => {
                 if(error) throw error;
 
                 this.data = data;
-                updateTemperature(this.data);
+                updateTrend(this.data, d => d.temperature);
             });
+
+            // TODO: handle missing values better than with 0 as default value
+            function convertToNumber(row, selectorFunc, defaultValue) {
+                let value = selectorFunc(row);
+                return value === undefined ? defaultValue : +value;
+            }
 
             function type(row) {
                 row.date = parseDateTime(row.date);
-                // TODO: handle missing values
-                row.temperature = row.temperature === undefined ? 0 : +row.temperature;
+                row.temperature = convertToNumber(row, r => r.temperature, 0);
+                row.dewPoint = convertToNumber(row, r => r.dewPoint, 0);
+                row.rain = convertToNumber(row, r => r.rain, 0);
+                row.sun = convertToNumber(row, r => r.sun, 0);
                 return row;
             }
 
-            function updateTemperature(newData) {
+            function updateTrend(newData, selectorFunc) {
                 xscale.domain([d3.min(newData, d => d.date), d3.max(newData, d => d.date)]);
-                yscale.domain([d3.min(newData, d => d.temperature), d3.max(newData, d => d.temperature)]);
+                yscale.domain([d3.min(newData, selectorFunc), d3.max(newData, selectorFunc)]);
 
                 g_xaxis.call(xaxis);
                 g_yaxis.call(yaxis);
 
-                g.append("path")
-                    .datum(newData)
-                    .attr("class", "line")
-                    .attr("d", line);
+                const path = g.selectAll('path.line').data([newData]);
 
-// TODO: switch to DATA JOIN, ENTER, UPDATE, EXIT pattern
-//                const path = g.append('path').datum(newData, d => d.temperature);
-//
-//                const path_enter = path.enter()//.append('path')
-//                    .attr("class", "line");
-//                    //.attr("class", "temperature-line");
-//
-//                path.merge(path_enter)
-//                    .attr("d", line);
-//
-//                path.exit().remove();
+                const path_enter = path.enter().append('path')
+                    .attr("class", "line");
+
+                path.merge(path_enter)
+                    .attr("d", getScaledLine(selectorFunc));
+
+                path.exit().remove();
             }
+
+            d3.select('#trend-type-select').on('change', function() {
+                let selectedValue = d3.select("#trend-type-select").property("value");
+                let selectorFunc = Function("d", `return d.${selectedValue};`);
+                updateTrend(data, selectorFunc);
+            })
 
         </script>
     </section>

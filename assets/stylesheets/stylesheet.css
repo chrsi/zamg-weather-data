@@ -247,6 +247,10 @@ a {
 
 /* data visualization styles */
 
+#selection {
+  margin-bottom: 20px;
+}
+
 .line {
   fill: none;
   stroke: steelblue;
