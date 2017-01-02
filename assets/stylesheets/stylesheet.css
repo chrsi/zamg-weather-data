@@ -247,7 +247,7 @@ a {
 
 /* data visualization styles */
 
-#selection {
+#actions {
   margin-bottom: 20px;
 }
 
@@ -255,4 +255,14 @@ a {
   fill: none;
   stroke: steelblue;
   stroke-width: 1.5px;
+}
+
+.zoomOverlay {
+  pointer-events: all;
+  fill:none;
+}
+.band {
+  fill : none;
+  stroke-width: 1px;
+  stroke: red;
 }
