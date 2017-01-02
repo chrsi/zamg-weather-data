@@ -31,7 +31,7 @@
 
             const margin = {top: 0, bottom: 1, left: 20, right: 0};
 
-            const width = 800 - margin.left - margin.right;
+            const width = 1200 - margin.left - margin.right;
             const height = 600 - margin.top - margin.bottom;
 
             const svg = d3.select('#temperature-trend-content').append('svg')
@@ -43,7 +43,7 @@
 
             var data;
 
-            const parseDateTime = d3.timeParse("%d-%m-%Y %H:%M");
+            const parseDateTime = d3.timeParse("%d.%m.%Y %H:%M:%S");
 
             const xscale = d3.scaleTime()
                 .rangeRound([0, width]);
@@ -63,17 +63,20 @@
                 .x(d => xscale(d.date))
                 .y(d => yscale(d.temperature));
 
-            d3.csv("data/weather.csv", row => {
-                row.date = parseDateTime(row.date);
-                row.temperature = +row.temperature;
-                return row;
-            },
+            d3.csv("data/all.csv", type,
             (error, data) => {
                 if(error) throw error;
 
                 this.data = data;
                 updateTemperature(this.data);
             });
+
+            function type(row) {
+                row.date = parseDateTime(row.date);
+                // TODO: handle missing values
+                row.temperature = row.temperature === undefined ? 0 : +row.temperature;
+                return row;
+            }
 
             function updateTemperature(newData) {
                 xscale.domain([d3.min(newData, d => d.date), d3.max(newData, d => d.date)]);
@@ -83,7 +86,7 @@
                 g_yaxis.call(yaxis);
 
                 g.append("path")
-                    .datum(data)
+                    .datum(newData)
                     .attr("class", "line")
                     .attr("d", line);
 
