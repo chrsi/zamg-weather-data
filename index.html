@@ -34,6 +34,22 @@
                 <option value="sun">Sun</option>
             </select>
 
+            <select id="month-select">
+                <option value="-1">All months</option>
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+            </select>
+
             <button type="button" id="reset-zoom-button">Reset Zoom</button>
         </div>
 
@@ -132,7 +148,6 @@
                     x2: d3.max(newData, d => d.date),
                     y2: d3.max(newData, selectorFunc),
                 };
-
                 updateTrend(newData, selectorFunc);
             }
 
@@ -232,12 +247,34 @@
 
             }
 
+            function resetZoomToMonth() {
+                let monthNumber = d3.select("#month-select").property("value");
+                let selectorFunc = getTrendSelectorFunc();
+
+                if(monthNumber === undefined || monthNumber < 0) {
+                    initTrend(data, selectorFunc)
+                } else {
+                    let monthFilteredData = data.filter(d => d.date.getMonth() == monthNumber);
+                    zoomArea = {
+                        x1: d3.min(monthFilteredData, d => d.date),
+                        y1: d3.min(monthFilteredData, selectorFunc),
+                        x2: d3.max(monthFilteredData, d => d.date),
+                        y2: d3.max(monthFilteredData, selectorFunc),
+                    };
+                    updateTrend(data, getTrendSelectorFunc())
+                }
+            }
+
             d3.select('#trend-type-select').on('change', function() {
-                initTrend(data, getTrendSelectorFunc());
+                resetZoomToMonth()
+            });
+
+            d3.select("#month-select").on('change', function() {
+                resetZoomToMonth()
             });
 
             d3.select("#reset-zoom-button").on('click', function() {
-                initTrend(data, getTrendSelectorFunc())
+                resetZoomToMonth()
             })
 
         </script>
