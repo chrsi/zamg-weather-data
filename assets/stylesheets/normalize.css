@@ -301,6 +301,7 @@ input[type="submit"] {
 button[disabled],
 html input[disabled] {
   cursor: default;
+  color: #c0c0c0;
 }
 
 /**

@@ -50,7 +50,7 @@
                 <option value="11">December</option>
             </select>
 
-            <button type="button" id="reset-zoom-button">Reset Zoom</button>
+            <button type="button" id="reset-zoom-button" disabled="disabled">Reset Zoom</button>
         </div>
 
         <div id="temperature-trend-content"></div>
@@ -125,6 +125,10 @@
 
                 initTrend(this.data, d => d.temperature);
             });
+
+            function setResetButtonDisabled(userAppliedZoom) {
+                d3.select("#reset-zoom-button").attr("disabled", userAppliedZoom ? null : "disabled")
+            }
 
             // TODO: handle missing values better than with 0 as default value
             function convertToNumber(row, selectorFunc, defaultValue) {
@@ -238,6 +242,7 @@
                     .attr("x", bandPos[0])
                     .attr("y", bandPos[1]);
 
+                setResetButtonDisabled(true);
                 updateTrend(data, getTrendSelectorFunc());
             });
 
@@ -251,6 +256,7 @@
                 let monthNumber = d3.select("#month-select").property("value");
                 let selectorFunc = getTrendSelectorFunc();
 
+                setResetButtonDisabled(false);
                 if(monthNumber === undefined || monthNumber < 0) {
                     initTrend(data, selectorFunc)
                 } else {

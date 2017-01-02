@@ -263,6 +263,6 @@ a {
 }
 .band {
   fill : none;
-  stroke-width: 1px;
+  stroke-width: 1.5px;
   stroke: red;
 }
