@@ -24,9 +24,9 @@
 <section class="main-content">
 
     <section class="temperature-trend">
-        <h2>Trends</h2>
+        <h2>Trends for Linz/Hörsching weather station</h2>
 
-        <div id="actions">
+        <div class="row">
             <select id="trend-type-select">
                 <option value="temperature">Temperature</option>
                 <option value="dewPoint">Dew Point</option>
@@ -53,12 +53,22 @@
             <button type="button" id="reset-zoom-button" disabled="disabled">Reset Zoom</button>
         </div>
 
+        <div class="row small">
+            <p>
+                <b>Left mouse button: </b>Click, hold and move mouse to span a rectangle to zoom in.<br>
+                <b>Right mouse button: </b>Click, hold and move mouse to translate the line chart.
+            </p>
+        </div>
+
         <div id="temperature-trend-content"></div>
 
         <script type="text/javascript">
 
             const margin = {top: 0, bottom: 1, left: 25, right: 0};
             const zoomDuration = 750;
+            const moveDuration = 0;
+            const leftButton = 0;
+            const rightButton = 2;
 
             const width = 1200 - margin.left - margin.right;
             const height = 600 - margin.top - margin.bottom;
@@ -94,8 +104,12 @@
                     .y(d => yscale(selectorFunc(d)));
             }
 
-            var drag = d3.drag();
-            var bandPos = [-1, -1];
+            const drag = d3.drag().filter(() => {
+                let allowedButtons = [leftButton, rightButton]; // override filter, default would be only left button
+                return allowedButtons.includes(d3.event.button);
+            });
+            var bandPos = {x: -1, y: -1};
+            const moveStartPos = {x1: 0, x2: 0, y1: 0, y2: 0};
             var zoomArea;
 
             const band = svg.append("rect")
@@ -112,9 +126,10 @@
                 .attr("height", height);
 
             const zoomOverlay = svg.append("rect")
-                .attr("width", width - 10)
+                .attr("width", width)
                 .attr("height", height)
                 .attr("class", "zoomOverlay")
+                .on("contextmenu", (d, i) => d3.event.preventDefault())
                 .call(drag);
 
             d3.csv("data/all.csv", type,
@@ -152,10 +167,10 @@
                     x2: d3.max(newData, d => d.date),
                     y2: d3.max(newData, selectorFunc),
                 };
-                updateTrend(newData, selectorFunc);
+                updateTrend(newData, selectorFunc, zoomDuration);
             }
 
-            function updateTrend(newData, selectorFunc) {
+            function updateTrend(newData, selectorFunc, duration) {
                 if (zoomArea.x1 > zoomArea.x2) {
                     xscale.domain([zoomArea.x2, zoomArea.x1]);
                 } else {
@@ -168,8 +183,8 @@
                     yscale.domain([zoomArea.y1, zoomArea.y2]);
                 }
 
-                g_xaxis.transition().duration(zoomDuration).call(xaxis);
-                g_yaxis.transition().duration(zoomDuration).call(yaxis);
+                g_xaxis.transition().duration(duration).call(xaxis);
+                g_yaxis.transition().duration(duration).call(yaxis);
 
                 const path = g.selectAll('path.line').data([newData], selectorFunc);
 
@@ -177,43 +192,64 @@
                     .attr("class", "line")
                     .attr("clip-path", "url(#clip)");
 
-                path.merge(path_enter).transition().duration(zoomDuration)
+                path.merge(path_enter).transition().duration(duration)
                     .attr("d", getScaledLine(selectorFunc));
 
                 path.exit().remove();
             }
 
+            drag.on("start", function() {
+                let button = d3.event.sourceEvent.button;
+                if(button == leftButton) {
+                    dragLeftButtonStart(this);
+                } else if(button == rightButton) {
+                    dragRightButtonStart(this);
+                }
+            });
+
             drag.on("drag", function() {
-                let pos = d3.mouse(this);
-
-                if (pos[0] < bandPos[0]) {
-                    d3.select(".band").
-                    attr("transform", "translate(" + (pos[0]) + "," + bandPos[1] + ")");
+                let button = d3.event.sourceEvent.button;
+                if(button == leftButton) {
+                    dragLeftButton(this);
+                } else if(button == rightButton) {
+                    dragRightButton(this);
                 }
-                if (pos[1] < bandPos[1]) {
-                    d3.select(".band").
-                    attr("transform", "translate(" + (pos[0]) + "," + pos[1] + ")");
-                }
-                if (pos[1] < bandPos[1] && pos[0] > bandPos[0]) {
-                    d3.select(".band").
-                    attr("transform", "translate(" + (bandPos[0]) + "," + pos[1] + ")");
-                }
-
-                //set new position of band when user initializes drag
-                if (bandPos[0] == -1) {
-                    bandPos = pos;
-                    d3.select(".band").attr("transform", "translate(" + bandPos[0] + "," + bandPos[1] + ")");
-                }
-
-                d3.select(".band").transition().duration(1)
-                    .attr("width", Math.abs(bandPos[0] - pos[0]))
-                    .attr("height", Math.abs(bandPos[1] - pos[1]));
             });
 
             drag.on("end", function() {
-                let pos = d3.mouse(this);
-                let x1 = xscale.invert(bandPos[0]);
-                let x2 = xscale.invert(pos[0]);
+                let button = d3.event.sourceEvent.button;
+                if(button == leftButton) {
+                    dragLeftButtonEnd(this);
+                } else if(button == rightButton) {
+                    dragRightButtonEnd(this);
+                }
+            });
+
+            function dragLeftButton (element) {
+                let mousePos = d3.mouse(element);
+                let pos = {x: mousePos[0], y: mousePos[1]};
+
+                if (pos.x < bandPos.x) {
+                    d3.select(".band").attr("transform", "translate(" + (pos.x) + "," + bandPos.y + ")");
+                }
+                if (pos.y < bandPos.y) {
+                    d3.select(".band").attr("transform", "translate(" + (pos.x) + "," + pos.y + ")");
+                }
+                if (pos.y < bandPos.y && pos.x > bandPos.x) {
+                    d3.select(".band").attr("transform", "translate(" + (bandPos.x) + "," + pos.y + ")");
+                }
+
+                d3.select(".band").transition().duration(1)
+                    .attr("width", Math.abs(bandPos.x - pos.x))
+                    .attr("height", Math.abs(bandPos.y - pos.y));
+            }
+
+            function dragLeftButtonEnd(element) {
+                let mousePos = d3.mouse(element);
+                let pos = {x: mousePos[0], y: mousePos[1]};
+
+                let x1 = xscale.invert(bandPos.x);
+                let x2 = xscale.invert(pos.x);
 
                 if (x1 < x2) {
                     zoomArea.x1 = x1;
@@ -223,8 +259,8 @@
                     zoomArea.x2 = x1;
                 }
 
-                let y1 = yscale.invert(pos[1]);
-                let y2 = yscale.invert(bandPos[1]);
+                let y1 = yscale.invert(pos.y);
+                let y2 = yscale.invert(bandPos.y);
 
                 if (x1 < x2) {
                     zoomArea.y1 = y1;
@@ -234,22 +270,60 @@
                     zoomArea.y2 = y1;
                 }
 
-                bandPos = [-1, -1];
+                bandPos.x = -1;
+                bandPos.y = -1;
 
                 d3.select(".band").transition()
                     .attr("width", 0)
                     .attr("height", 0)
-                    .attr("x", bandPos[0])
-                    .attr("y", bandPos[1]);
+                    .attr("x", bandPos.x)
+                    .attr("y", bandPos.y);
 
                 setResetButtonDisabled(true);
-                updateTrend(data, getTrendSelectorFunc());
-            });
+                updateTrend(data, getTrendSelectorFunc(), zoomDuration)
+            }
+
+            function dragLeftButtonStart(element) {
+                let mousePos = d3.mouse(element);
+                bandPos = {x: mousePos[0], y: mousePos[1]};
+                d3.select(".band").attr("transform", "translate(" + bandPos.x + "," + bandPos.y + ")");
+            }
+
+            function dragRightButtonStart(element) {
+                moveStartPos.x1 = xscale(zoomArea.x1);
+                moveStartPos.x2 = xscale(zoomArea.x2);
+                moveStartPos.y1 = yscale(zoomArea.y1);
+                moveStartPos.y2 = yscale(zoomArea.y2);
+            }
+
+            function dragRightButton(element) {
+                const moveSpeedFactor = 10.0;
+                moveStartPos.x1 = moveStartPos.x1 - (d3.event.dx / moveSpeedFactor);
+                moveStartPos.x2 = moveStartPos.x2 - (d3.event.dx / moveSpeedFactor);
+                moveStartPos.y1 = moveStartPos.y1 - (d3.event.dy / moveSpeedFactor);
+                moveStartPos.y2 = moveStartPos.y2 - (d3.event.dy / moveSpeedFactor);
+
+                let x1 = xscale.invert(moveStartPos.x1);
+                let x2 = xscale.invert(moveStartPos.x2);
+
+                let y1 = yscale.invert(moveStartPos.y1);
+                let y2 = yscale.invert(moveStartPos.y2);
+
+                zoomArea.x1 = x1;
+                zoomArea.x2 = x2;
+                zoomArea.y1 = y1;
+                zoomArea.y2 = y2;
+
+                setResetButtonDisabled(true);
+                updateTrend(data, getTrendSelectorFunc(), moveDuration);
+            }
+
+            function dragRightButtonEnd(element) {
+            }
 
             function getTrendSelectorFunc() {
                 let selectedValue = d3.select("#trend-type-select").property("value");
                 return Function("d", `return d.${selectedValue};`);
-
             }
 
             function resetZoomToMonth() {
@@ -267,7 +341,7 @@
                         x2: d3.max(monthFilteredData, d => d.date),
                         y2: d3.max(monthFilteredData, selectorFunc),
                     };
-                    updateTrend(data, getTrendSelectorFunc())
+                    updateTrend(data, getTrendSelectorFunc(), zoomDuration)
                 }
             }
 
@@ -294,6 +368,8 @@
         <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a
                 href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a
                 href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+
+        <span class="site-footer-credits">The weather data was taken from <a href="http://at-wetter.tk">at-wetter.tk</a>.</span>
     </footer>
 
 </section>

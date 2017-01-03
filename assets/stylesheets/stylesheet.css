@@ -230,6 +230,7 @@ a {
   font-weight: bold; }
 
 .site-footer-credits {
+  display: block;
   color: #819198; }
 
 @media screen and (min-width: 90em) {
@@ -247,8 +248,12 @@ a {
 
 /* data visualization styles */
 
-#actions {
+.row {
   margin-bottom: 20px;
+}
+
+.small {
+  font-size: 0.95rem;
 }
 
 .line {
@@ -261,6 +266,7 @@ a {
   pointer-events: all;
   fill:none;
 }
+
 .band {
   fill : none;
   stroke-width: 1.5px;
