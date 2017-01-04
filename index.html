@@ -28,10 +28,10 @@
 
         <div class="row">
             <select id="trend-type-select">
-                <option value="temperature">Temperature</option>
-                <option value="dewPoint">Dew Point</option>
-                <option value="rain">Rain</option>
-                <option value="sun">Sun</option>
+                <option value="temperature" data-unit="°C">Temperature</option>
+                <option value="dewPoint" data-unit="°C">Dew Point</option>
+                <option value="rain" data-unit="l/m²">Rain</option>
+                <option value="sun" data-unit="%">Sun</option>
             </select>
 
             <select id="month-select">
@@ -97,6 +97,13 @@
             const yaxis = d3.axisLeft().scale(yscale);
             const g_yaxis = g.append('g')
                 .attr('class','y axis');
+
+            g_yaxis.append("text")
+                .attr("fill", "black")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", ".71em")
+                .style("text-anchor", "end");
 
             function getScaledLine(selectorFunc) {
                 return d3.line()
@@ -183,6 +190,7 @@
                     yscale.domain([zoomArea.y1, zoomArea.y2]);
                 }
 
+                g_yaxis.select("text").text(getTrendUnit());
                 g_xaxis.transition().duration(duration).call(xaxis);
                 g_yaxis.transition().duration(duration).call(yaxis);
 
@@ -319,6 +327,14 @@
             }
 
             function dragRightButtonEnd(element) {
+            }
+
+            function getTrendUnit() {
+                let selectedValue = d3.select("#trend-type-select").property("value");
+                let unit;
+                d3.select(`#trend-type-select option[value='${selectedValue}']`)
+                    .datum(function() { unit = this.dataset.unit });
+                return unit;
             }
 
             function getTrendSelectorFunc() {
