@@ -28,10 +28,7 @@
 
         <div class="row">
             <select id="trend-type-select">
-                <option value="temperature" data-unit="°C">Temperature</option>
-                <option value="dewPoint" data-unit="°C">Dew Point</option>
-                <option value="rain" data-unit="l/m²">Rain</option>
-                <option value="sun" data-unit="%">Sun</option>
+
             </select>
 
             <select id="month-select">
@@ -64,11 +61,53 @@
 
         <div class="wrapper">
             <div id="wind-direction-content"></div>
-            <div id="scatter-plot-content"></div>
+            <div id="scatter-plot-content">
+                <div class="row">
+                    <select id="scatter-x-axis-type">
+                    </select>
+                    <span>(x-Axis) vs.</span>
+                    <select id="scatter-y-axis-type">
+                    </select>
+                    <span>(y-Axis)</span>
+                </div>
+            </div>
         </div>
 
 
         <script type="text/javascript">
+
+            const trendTypes = [
+                {value: "temperature", text: "Temperature", unit: "°C"},
+                {value: "dewPoint", text: "Dew Point", unit: "°C"},
+                {value: "rain", text: "Rain", unit: "l/m²"},
+                {value: "sun", text: "Sun", unit: "%"}];
+
+            function fillTypeSelect(elementSelector) {
+                const options = d3.select(elementSelector).selectAll("option").data(trendTypes);
+                const options_enter = options.enter().append("option")
+                    .attr("value", o => o.value)
+                    .attr("data-unit", o => o.unit)
+                    .text(o => o.text);
+                options.merge(options_enter);
+                options.exit().remove();
+            }
+
+            function updateDisabledScatterOptions() {
+                let selectedXAxisValue = d3.select("#scatter-x-axis-type").property("value");
+                let selectedYAxisValue = d3.select("#scatter-y-axis-type").property("value");
+
+                d3.select("#scatter-x-axis-type").selectAll("option").attr("disabled", null);
+                d3.select("#scatter-y-axis-type").selectAll("option").attr("disabled", null);
+
+                d3.select(`#scatter-x-axis-type option[value='${selectedYAxisValue}']`).attr("disabled", "disabled");
+                d3.select(`#scatter-y-axis-type option[value='${selectedXAxisValue}']`).attr("disabled", "disabled");
+            }
+
+            fillTypeSelect("#trend-type-select");
+            fillTypeSelect("#scatter-x-axis-type");
+            fillTypeSelect("#scatter-y-axis-type");
+            d3.select("#scatter-y-axis-type").property("value", "rain");
+            updateDisabledScatterOptions();
 
             const margin = {top: 0, bottom: 1, left: 25, right: 0};
             const zoomDuration = 750;
@@ -136,8 +175,7 @@
                 .attr("fill", "black")
                 .attr("x", scatterWidth - margin.left - margin.right)
                 .attr("y", -20)
-                .style("text-anchor", "end")
-                .text("Temperature [°C]");
+                .style("text-anchor", "end");
 
             const scatterYAxis = d3.axisLeft().scale(scatterYScale);
             const g_scatterYAxis = scatterGroup.append('g')
@@ -148,8 +186,7 @@
                 .attr("transform", "rotate(-90)")
                 .attr("y", 6)
                 .attr("dy", ".71em")
-                .style("text-anchor", "end")
-                .text("Rain [l/m²]");
+                .style("text-anchor", "end");
 
             var data;
 
@@ -245,7 +282,7 @@
                     trendYScale.domain([zoomArea.y1, zoomArea.y2]);
                 }
 
-                g_trendYAxis.select("text").text(getTrendUnit());
+                g_trendYAxis.select("text").text(getSelectedTrendTypeUnit());
                 g_trendXAxis.transition().duration(duration).call(trendXAxis);
                 g_trendYAxis.transition().duration(duration).call(trendYAxis);
 
@@ -262,12 +299,19 @@
             }
 
             function updateScatterPlot(newData, duration) {
+                console.log("updating scatter plot");
+                let newDataFilteredByDate = newData.filter(d => d.date >= zoomArea.x1 && d.date <= zoomArea.x2);
 
-                let newDataFilteredByDate = newData.filter(d => d.rain > 0 && d.date >= zoomArea.x1 && d.date <= zoomArea.x2);
+                let xAxisSelectorFunc = getScatterXAxisSelectorFunc();
+                let yAxisSelectorFunc = getScatterYAxisSelectorFunc();
 
-                scatterXScale.domain(d3.extent(newDataFilteredByDate, d => d.temperature));
-                scatterYScale.domain(d3.extent(newDataFilteredByDate, d => d.rain));
+                scatterXScale.domain(d3.extent(newDataFilteredByDate, xAxisSelectorFunc));
+                scatterYScale.domain(d3.extent(newDataFilteredByDate, yAxisSelectorFunc));
 
+                let xAxisTrendType = getScatterXAxisTrendType();
+                let yAxisTrendType = getScatterYAxisTrendType();
+                g_scatterXAxis.select("text").text(`${xAxisTrendType.text} [${xAxisTrendType.unit}]`);
+                g_scatterYAxis.select("text").text(`${yAxisTrendType.text} [${yAxisTrendType.unit}]`);
                 g_scatterXAxis.transition().duration(duration).call(scatterXAxis);
                 g_scatterYAxis.transition().duration(duration).call(scatterYAxis);
 
@@ -279,8 +323,8 @@
                     .style("fill", "steelblue");
 
                 dots.merge(dots_enter).transition().duration(duration)
-                    .attr("cx", d => scatterXScale(d.temperature))
-                    .attr("cy", d => scatterYScale(d.rain));
+                    .attr("cx", d => scatterXScale(xAxisSelectorFunc(d)))
+                    .attr("cy", d => scatterYScale(yAxisSelectorFunc(d)));
 
                 dots.exit().remove();
             }
@@ -408,16 +452,35 @@
             function dragRightButtonEnd(element) {
             }
 
-            function getTrendUnit() {
-                let selectedValue = d3.select("#trend-type-select").property("value");
-                let unit;
-                d3.select(`#trend-type-select option[value='${selectedValue}']`)
-                    .datum(function() { unit = this.dataset.unit });
-                return unit;
+            function getSelectedTrendType(elementSelector) {
+                let selectedValue = d3.select(elementSelector).property("value");
+                return trendTypes.find(e => e.value == selectedValue);
+            }
+
+            function getSelectedTrendTypeUnit() {
+                return getSelectedTrendType("#trend-type-select").unit;
+            }
+
+            function getScatterXAxisTrendType() {
+                return getSelectedTrendType("#scatter-x-axis-type");
+            }
+
+            function getScatterYAxisTrendType() {
+                return getSelectedTrendType("#scatter-y-axis-type");
             }
 
             function getTrendSelectorFunc() {
                 let selectedValue = d3.select("#trend-type-select").property("value");
+                return Function("d", `return d.${selectedValue};`);
+            }
+
+            function getScatterXAxisSelectorFunc() {
+                let selectedValue = d3.select("#scatter-x-axis-type").property("value");
+                return Function("d", `return d.${selectedValue};`);
+            }
+
+            function getScatterYAxisSelectorFunc() {
+                let selectedValue = d3.select("#scatter-y-axis-type").property("value");
                 return Function("d", `return d.${selectedValue};`);
             }
 
@@ -440,15 +503,25 @@
                 }
             }
 
-            d3.select('#trend-type-select').on('change', function() {
+            d3.select('#trend-type-select').on("change", function() {
                 resetZoomToMonth()
             });
 
-            d3.select("#month-select").on('change', function() {
+            d3.select("#month-select").on("change", function() {
                 resetZoomToMonth()
             });
 
-            d3.select("#reset-zoom-button").on('click', function() {
+            d3.select("#scatter-x-axis-type").on("change", function() {
+                updateDisabledScatterOptions();
+                updateScatterPlot(data, zoomDuration);
+            });
+
+            d3.select("#scatter-y-axis-type").on("change", function() {
+                updateDisabledScatterOptions();
+                updateScatterPlot(data, zoomDuration);
+            });
+
+            d3.select("#reset-zoom-button").on("click", function() {
                 resetZoomToMonth()
             })
 
