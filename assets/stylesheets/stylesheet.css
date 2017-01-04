@@ -256,6 +256,19 @@ a {
   font-size: 0.95rem;
 }
 
+.wrapper {
+  display: flex;
+  margin-top: 20px;
+}
+
+#wind-direction-content {
+  flex: 0 0 50%;
+}
+
+#scatter-plot-content {
+  flex: 1;
+}
+
 .line {
   fill: none;
   stroke: steelblue;

@@ -60,7 +60,13 @@
             </p>
         </div>
 
-        <div id="temperature-trend-content"></div>
+        <div id="trend-content"></div>
+
+        <div class="wrapper">
+            <div id="wind-direction-content"></div>
+            <div id="scatter-plot-content"></div>
+        </div>
+
 
         <script type="text/javascript">
 
@@ -70,45 +76,89 @@
             const leftButton = 0;
             const rightButton = 2;
 
-            const width = 1200 - margin.left - margin.right;
-            const height = 600 - margin.top - margin.bottom;
+            const trendWidth = 1200 - margin.left - margin.right;
+            const windWidth = 600 - margin.left - margin.right;
+            const scatterWidth = 600 - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
 
-            const svg = d3.select('#temperature-trend-content').append('svg')
-                .attr('width', width)
+            const trendSvg = d3.select('#trend-content').append('svg')
+                .attr('width', trendWidth)
                 .attr('height', height);
 
-            const g = svg.append('g')
+            const trendGroup = trendSvg.append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-            var data;
+            const trendXScale = d3.scaleTime().rangeRound([0, trendWidth]);
+            const trendYScale = d3.scaleLinear().rangeRound([height, 0]);
 
-            const parseDateTime = d3.timeParse("%d.%m.%Y %H:%M:%S");
-
-            const xscale = d3.scaleTime()
-                .rangeRound([0, width]);
-            const yscale = d3.scaleLinear()
-                .rangeRound([height, 0]);
-
-            const xaxis = d3.axisTop().scale(xscale);
-            const g_xaxis = g.append('g')
+            const trendXAxis = d3.axisTop().scale(trendXScale);
+            const g_trendXAxis = trendGroup.append('g')
                 .attr('class','x axis')
                 .attr("transform", `translate(0,${height - margin.bottom - margin.top})`);
 
-            const yaxis = d3.axisLeft().scale(yscale);
-            const g_yaxis = g.append('g')
+            const trendYAxis = d3.axisLeft().scale(trendYScale);
+            const g_trendYAxis = trendGroup.append('g')
                 .attr('class','y axis');
 
-            g_yaxis.append("text")
+            g_trendYAxis.append("text")
                 .attr("fill", "black")
                 .attr("transform", "rotate(-90)")
                 .attr("y", 6)
                 .attr("dy", ".71em")
                 .style("text-anchor", "end");
 
+
+            const windSvg = d3.select('#wind-direction-content').append('svg')
+                .attr('width', windWidth)
+                .attr('height', height);
+
+            const windGroup = windSvg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // TODO: add wind x,y scale; add wind x,y axis, add wind g_x, g_y axis
+
+            const scatterSvg = d3.select('#scatter-plot-content').append('svg')
+                .attr('width', scatterWidth)
+                .attr('height', height);
+
+            const scatterGroup = scatterSvg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            const scatterXScale = d3.scaleLinear().rangeRound([0, scatterWidth]);
+            const scatterYScale = d3.scaleLinear().rangeRound([height, 0]);
+
+            const scatterXAxis = d3.axisTop().scale(scatterXScale);
+            const g_scatterXAxis = scatterGroup.append('g')
+                .attr('class','x axis')
+                .attr("transform", `translate(0,${height - margin.bottom - margin.top})`);
+
+            g_scatterXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", scatterWidth - margin.left - margin.right)
+                .attr("y", -20)
+                .style("text-anchor", "end")
+                .text("Temperature [°C]");
+
+            const scatterYAxis = d3.axisLeft().scale(scatterYScale);
+            const g_scatterYAxis = scatterGroup.append('g')
+                .attr('class','y axis');
+
+            g_scatterYAxis.append("text")
+                .attr("fill", "black")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", ".71em")
+                .style("text-anchor", "end")
+                .text("Rain [l/m²]");
+
+            var data;
+
+            const parseDateTime = d3.timeParse("%d.%m.%Y %H:%M:%S");
+
             function getScaledLine(selectorFunc) {
                 return d3.line()
-                    .x(d => xscale(d.date))
-                    .y(d => yscale(selectorFunc(d)));
+                    .x(d => trendXScale(d.date))
+                    .y(d => trendYScale(selectorFunc(d)));
             }
 
             const drag = d3.drag().filter(() => {
@@ -119,21 +169,21 @@
             const moveStartPos = {x1: 0, x2: 0, y1: 0, y2: 0};
             var zoomArea;
 
-            const band = svg.append("rect")
+            const band = trendGroup.append("rect")
                 .attr("width", 0)
                 .attr("height", 0)
                 .attr("x", 0)
                 .attr("y", 0)
                 .attr("class", "band");
 
-            svg.append("clipPath")
+            trendGroup.append("clipPath")
                 .attr("id", "clip")
                 .append("rect")
-                .attr("width", width)
+                .attr("width", trendWidth)
                 .attr("height", height);
 
-            const zoomOverlay = svg.append("rect")
-                .attr("width", width)
+            const zoomOverlay = trendGroup.append("rect")
+                .attr("width", trendWidth)
                 .attr("height", height)
                 .attr("class", "zoomOverlay")
                 .on("contextmenu", (d, i) => d3.event.preventDefault())
@@ -145,7 +195,7 @@
 
                 this.data = data;
 
-                initTrend(this.data, d => d.temperature);
+                initAllPlots(this.data, d => d.temperature);
             });
 
             function setResetButtonDisabled(userAppliedZoom) {
@@ -167,34 +217,39 @@
                 return row;
             }
 
-            function initTrend(newData, selectorFunc) {
+            function initAllPlots(newData, selectorFunc) {
                 zoomArea = {
                     x1: d3.min(newData, d => d.date),
                     y1: d3.min(newData, selectorFunc),
                     x2: d3.max(newData, d => d.date),
                     y2: d3.max(newData, selectorFunc),
                 };
-                updateTrend(newData, selectorFunc, zoomDuration);
+                updateAllPlots(newData, selectorFunc, zoomDuration);
+            }
+
+            function updateAllPlots(newData, selectorFunc, duration) {
+                updateTrend(newData, selectorFunc, duration);
+                updateScatterPlot(newData, duration);
             }
 
             function updateTrend(newData, selectorFunc, duration) {
                 if (zoomArea.x1 > zoomArea.x2) {
-                    xscale.domain([zoomArea.x2, zoomArea.x1]);
+                    trendXScale.domain([zoomArea.x2, zoomArea.x1]);
                 } else {
-                    xscale.domain([zoomArea.x1, zoomArea.x2]);
+                    trendXScale.domain([zoomArea.x1, zoomArea.x2]);
                 }
 
                 if (zoomArea.y1 > zoomArea.y2) {
-                    yscale.domain([zoomArea.y2, zoomArea.y1]);
+                    trendYScale.domain([zoomArea.y2, zoomArea.y1]);
                 } else {
-                    yscale.domain([zoomArea.y1, zoomArea.y2]);
+                    trendYScale.domain([zoomArea.y1, zoomArea.y2]);
                 }
 
-                g_yaxis.select("text").text(getTrendUnit());
-                g_xaxis.transition().duration(duration).call(xaxis);
-                g_yaxis.transition().duration(duration).call(yaxis);
+                g_trendYAxis.select("text").text(getTrendUnit());
+                g_trendXAxis.transition().duration(duration).call(trendXAxis);
+                g_trendYAxis.transition().duration(duration).call(trendYAxis);
 
-                const path = g.selectAll('path.line').data([newData], selectorFunc);
+                const path = trendGroup.selectAll('path.line').data([newData], selectorFunc);
 
                 const path_enter = path.enter().append('path')
                     .attr("class", "line")
@@ -204,6 +259,30 @@
                     .attr("d", getScaledLine(selectorFunc));
 
                 path.exit().remove();
+            }
+
+            function updateScatterPlot(newData, duration) {
+
+                let newDataFilteredByDate = newData.filter(d => d.rain > 0 && d.date >= zoomArea.x1 && d.date <= zoomArea.x2);
+
+                scatterXScale.domain(d3.extent(newDataFilteredByDate, d => d.temperature));
+                scatterYScale.domain(d3.extent(newDataFilteredByDate, d => d.rain));
+
+                g_scatterXAxis.transition().duration(duration).call(scatterXAxis);
+                g_scatterYAxis.transition().duration(duration).call(scatterYAxis);
+
+                const dots = scatterGroup.selectAll(".dot").data(newDataFilteredByDate);
+
+                const dots_enter = dots.enter().append("circle")
+                    .attr("class", "dot")
+                    .attr("r", 2)
+                    .style("fill", "steelblue");
+
+                dots.merge(dots_enter).transition().duration(duration)
+                    .attr("cx", d => scatterXScale(d.temperature))
+                    .attr("cy", d => scatterYScale(d.rain));
+
+                dots.exit().remove();
             }
 
             drag.on("start", function() {
@@ -256,8 +335,8 @@
                 let mousePos = d3.mouse(element);
                 let pos = {x: mousePos[0], y: mousePos[1]};
 
-                let x1 = xscale.invert(bandPos.x);
-                let x2 = xscale.invert(pos.x);
+                let x1 = trendXScale.invert(bandPos.x);
+                let x2 = trendXScale.invert(pos.x);
 
                 if (x1 < x2) {
                     zoomArea.x1 = x1;
@@ -267,8 +346,8 @@
                     zoomArea.x2 = x1;
                 }
 
-                let y1 = yscale.invert(pos.y);
-                let y2 = yscale.invert(bandPos.y);
+                let y1 = trendYScale.invert(pos.y);
+                let y2 = trendYScale.invert(bandPos.y);
 
                 if (x1 < x2) {
                     zoomArea.y1 = y1;
@@ -288,7 +367,7 @@
                     .attr("y", bandPos.y);
 
                 setResetButtonDisabled(true);
-                updateTrend(data, getTrendSelectorFunc(), zoomDuration)
+                updateAllPlots(data, getTrendSelectorFunc(), zoomDuration)
             }
 
             function dragLeftButtonStart(element) {
@@ -298,10 +377,10 @@
             }
 
             function dragRightButtonStart(element) {
-                moveStartPos.x1 = xscale(zoomArea.x1);
-                moveStartPos.x2 = xscale(zoomArea.x2);
-                moveStartPos.y1 = yscale(zoomArea.y1);
-                moveStartPos.y2 = yscale(zoomArea.y2);
+                moveStartPos.x1 = trendXScale(zoomArea.x1);
+                moveStartPos.x2 = trendXScale(zoomArea.x2);
+                moveStartPos.y1 = trendYScale(zoomArea.y1);
+                moveStartPos.y2 = trendYScale(zoomArea.y2);
             }
 
             function dragRightButton(element) {
@@ -311,11 +390,11 @@
                 moveStartPos.y1 = moveStartPos.y1 - (d3.event.dy / moveSpeedFactor);
                 moveStartPos.y2 = moveStartPos.y2 - (d3.event.dy / moveSpeedFactor);
 
-                let x1 = xscale.invert(moveStartPos.x1);
-                let x2 = xscale.invert(moveStartPos.x2);
+                let x1 = trendXScale.invert(moveStartPos.x1);
+                let x2 = trendXScale.invert(moveStartPos.x2);
 
-                let y1 = yscale.invert(moveStartPos.y1);
-                let y2 = yscale.invert(moveStartPos.y2);
+                let y1 = trendYScale.invert(moveStartPos.y1);
+                let y2 = trendYScale.invert(moveStartPos.y2);
 
                 zoomArea.x1 = x1;
                 zoomArea.x2 = x2;
@@ -323,7 +402,7 @@
                 zoomArea.y2 = y2;
 
                 setResetButtonDisabled(true);
-                updateTrend(data, getTrendSelectorFunc(), moveDuration);
+                updateAllPlots(data, getTrendSelectorFunc(), moveDuration);
             }
 
             function dragRightButtonEnd(element) {
@@ -348,7 +427,7 @@
 
                 setResetButtonDisabled(false);
                 if(monthNumber === undefined || monthNumber < 0) {
-                    initTrend(data, selectorFunc)
+                    initAllPlots(data, selectorFunc)
                 } else {
                     let monthFilteredData = data.filter(d => d.date.getMonth() == monthNumber);
                     zoomArea = {
@@ -357,7 +436,7 @@
                         x2: d3.max(monthFilteredData, d => d.date),
                         y2: d3.max(monthFilteredData, selectorFunc),
                     };
-                    updateTrend(data, getTrendSelectorFunc(), zoomDuration)
+                    updateAllPlots(data, getTrendSelectorFunc(), zoomDuration)
                 }
             }
 
