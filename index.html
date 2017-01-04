@@ -28,7 +28,6 @@
 
         <div class="row">
             <select id="trend-type-select">
-
             </select>
 
             <select id="month-select">
@@ -75,12 +74,88 @@
 
 
         <script type="text/javascript">
-
             const trendTypes = [
-                {value: "temperature", text: "Temperature", unit: "°C"},
-                {value: "dewPoint", text: "Dew Point", unit: "°C"},
-                {value: "rain", text: "Rain", unit: "l/m²"},
-                {value: "sun", text: "Sun", unit: "%"}];
+                {
+                    value: "temperature",
+                    text: "Temperature",
+                    unit: "°C",
+                    convert: row => {
+                        row.temperature = convertToNumber(row, r => r.temperature, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "dewPoint",
+                    text: "Dew Point",
+                    unit: "°C",
+                    convert: row => {
+                        row.dewPoint = convertToNumber(row, r => r.dewPoint, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "relativeHumidity",
+                    text: "Relative Humidity",
+                    unit: "%",
+                    convert: row => {
+                        row.relativeHumidity = convertToNumber(row, r => r.relativeHumidity, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "windSpeed",
+                    text: "Wind Speed",
+                    unit: "km/h",
+                    convert: row => {
+                        row.windSpeed = convertToNumber(row, r => r.windSpeed, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "peekWindSpeed",
+                    text: "Peek Wind Speed",
+                    unit: "km/h",
+                    convert: row => {
+                        row.peekWindSpeed = convertToNumber(row, r => r.peekWindSpeed, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "rain",
+                    text: "Rain",
+                    unit: "l/m²",
+                    convert: row => {
+                        row.rain = convertToNumber(row, r => r.rain, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "atmosphericPressureRed",
+                    text: "Atm. Pressure (Sea Level)",
+                    unit: "hPa",
+                    convert: row => {
+                        row.atmosphericPressureRed = convertToNumber(row, r => r.atmosphericPressureRed, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "atmosphericPressureStation",
+                    text: "Atm. Pressure (Station)",
+                    unit: "hPa",
+                    convert: row => {
+                        row.atmosphericPressureStation = convertToNumber(row, r => r.atmosphericPressureStation, 0);
+                        return row;
+                    }
+                },
+                {
+                    value: "sun",
+                    text: "Sun",
+                    unit: "%",
+                    convert: row => {
+                        row.sun = convertToNumber(row, r => r.sun, 0);
+                        return row;
+                    }
+                }];
 
             function fillTypeSelect(elementSelector) {
                 const options = d3.select(elementSelector).selectAll("option").data(trendTypes);
@@ -124,7 +199,8 @@
 
             const trendSvg = d3.select('#trend-content').append('svg')
                 .attr('width', trendWidth)
-                .attr('height', trendHeight);
+                .attr('height', trendHeight)
+                .on("contextmenu", (d, i) => d3.event.preventDefault());
 
             const trendGroup = trendSvg.append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
@@ -225,7 +301,6 @@
                 .attr("width", trendWidth)
                 .attr("height", trendHeight)
                 .attr("class", "zoomOverlay")
-                .on("contextmenu", (d, i) => d3.event.preventDefault())
                 .call(drag);
 
             d3.csv("data/all.csv", type,
@@ -237,6 +312,12 @@
                 initAllPlots(this.data, d => d.temperature);
             });
 
+            function type(row) {
+                row.date = parseDateTime(row.date);
+                trendTypes.forEach(t => row = t.convert(row));
+                return row;
+            }
+
             function setResetButtonDisabled(userAppliedZoom) {
                 d3.select("#reset-zoom-button").attr("disabled", userAppliedZoom ? null : "disabled")
             }
@@ -245,15 +326,6 @@
             function convertToNumber(row, selectorFunc, defaultValue) {
                 let value = selectorFunc(row);
                 return value === undefined ? defaultValue : +value;
-            }
-
-            function type(row) {
-                row.date = parseDateTime(row.date);
-                row.temperature = convertToNumber(row, r => r.temperature, 0);
-                row.dewPoint = convertToNumber(row, r => r.dewPoint, 0);
-                row.rain = convertToNumber(row, r => r.rain, 0);
-                row.sun = convertToNumber(row, r => r.sun, 0);
-                return row;
             }
 
             function initAllPlots(newData, selectorFunc) {
@@ -301,7 +373,6 @@
             }
 
             function updateScatterPlot(newData, duration) {
-                console.log("updating scatter plot");
                 let newDataFilteredByDate = newData.filter(d => d.date >= zoomArea.x1 && d.date <= zoomArea.x2);
 
                 let xAxisSelectorFunc = getScatterXAxisSelectorFunc();
