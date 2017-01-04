@@ -118,22 +118,24 @@
             const trendWidth = 1200 - margin.left - margin.right;
             const windWidth = 600 - margin.left - margin.right;
             const scatterWidth = 600 - margin.left - margin.right;
-            const height = 400 - margin.top - margin.bottom;
+            const trendHeight = 400 - margin.top - margin.bottom;
+            const windHeight = 350 - margin.top - margin.bottom;
+            const scatterHeight = 350 - margin.top - margin.bottom;
 
             const trendSvg = d3.select('#trend-content').append('svg')
                 .attr('width', trendWidth)
-                .attr('height', height);
+                .attr('height', trendHeight);
 
             const trendGroup = trendSvg.append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
             const trendXScale = d3.scaleTime().rangeRound([0, trendWidth]);
-            const trendYScale = d3.scaleLinear().rangeRound([height, 0]);
+            const trendYScale = d3.scaleLinear().rangeRound([trendHeight, 0]);
 
             const trendXAxis = d3.axisTop().scale(trendXScale);
             const g_trendXAxis = trendGroup.append('g')
                 .attr('class','x axis')
-                .attr("transform", `translate(0,${height - margin.bottom - margin.top})`);
+                .attr("transform", `translate(0,${trendHeight - margin.bottom - margin.top})`);
 
             const trendYAxis = d3.axisLeft().scale(trendYScale);
             const g_trendYAxis = trendGroup.append('g')
@@ -149,7 +151,7 @@
 
             const windSvg = d3.select('#wind-direction-content').append('svg')
                 .attr('width', windWidth)
-                .attr('height', height);
+                .attr('height', windHeight);
 
             const windGroup = windSvg.append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
@@ -158,18 +160,18 @@
 
             const scatterSvg = d3.select('#scatter-plot-content').append('svg')
                 .attr('width', scatterWidth)
-                .attr('height', height);
+                .attr('height', scatterHeight);
 
             const scatterGroup = scatterSvg.append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
             const scatterXScale = d3.scaleLinear().rangeRound([0, scatterWidth]);
-            const scatterYScale = d3.scaleLinear().rangeRound([height, 0]);
+            const scatterYScale = d3.scaleLinear().rangeRound([scatterHeight, 0]);
 
             const scatterXAxis = d3.axisTop().scale(scatterXScale);
             const g_scatterXAxis = scatterGroup.append('g')
                 .attr('class','x axis')
-                .attr("transform", `translate(0,${height - margin.bottom - margin.top})`);
+                .attr("transform", `translate(0,${scatterHeight - margin.bottom - margin.top})`);
 
             g_scatterXAxis.append("text")
                 .attr("fill", "black")
@@ -217,11 +219,11 @@
                 .attr("id", "clip")
                 .append("rect")
                 .attr("width", trendWidth)
-                .attr("height", height);
+                .attr("height", trendHeight);
 
             const zoomOverlay = trendGroup.append("rect")
                 .attr("width", trendWidth)
-                .attr("height", height)
+                .attr("height", trendHeight)
                 .attr("class", "zoomOverlay")
                 .on("contextmenu", (d, i) => d3.event.preventDefault())
                 .call(drag);
