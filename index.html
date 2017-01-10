@@ -134,7 +134,7 @@
                     text: "Atm. Pressure (Sea Level)",
                     unit: "hPa",
                     convert: row => {
-                        row.atmosphericPressureRed = convertToNumber(row, r => r.atmosphericPressureRed, 0);
+                        row.atmosphericPressureRed = convertToNumber(row, r => r.atmosphericPressureRed, 1000);
                         return row;
                     }
                 },
@@ -143,7 +143,7 @@
                     text: "Atm. Pressure (Station)",
                     unit: "hPa",
                     convert: row => {
-                        row.atmosphericPressureStation = convertToNumber(row, r => r.atmosphericPressureStation, 0);
+                        row.atmosphericPressureStation = convertToNumber(row, r => r.atmosphericPressureStation, 1000);
                         return row;
                     }
                 },
@@ -161,7 +161,6 @@
                 const options = d3.select(elementSelector).selectAll("option").data(trendTypes);
                 const options_enter = options.enter().append("option")
                     .attr("value", o => o.value)
-                    .attr("data-unit", o => o.unit)
                     .text(o => o.text);
                 options.merge(options_enter);
                 options.exit().remove();
@@ -184,7 +183,7 @@
             d3.select("#scatter-y-axis-type").property("value", "rain");
             updateDisabledScatterOptions();
 
-            const margin = {top: 0, bottom: 1, left: 25, right: 0};
+            const margin = {top: 2, bottom: 1, left: 35, right: 0};
             const zoomDuration = 750;
             const moveDuration = 0;
             const leftButton = 0;
