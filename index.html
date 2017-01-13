@@ -229,7 +229,6 @@
                 .attr('height', windHeight);
 
             const windGroup = windSvg.append('g')
-                .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
             const windXScale = d3.scaleLinear().range([0,windWidth]);
             const windYScale = d3.scaleLinear().range([windHeight,0]);
