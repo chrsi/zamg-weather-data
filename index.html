@@ -236,15 +236,21 @@
 
             const windGroupContent = windGroup.append('g');
 
-            const windXAxis = d3.axisTop().scale(windXScale);
-            const g_windXAxis = windGroup.append('g')
-            .attr('class','x axis')
-            .attr("transform", `translate(0,${windHeight/2 - margin.bottom - margin.top})`);
+            function absoluteAxisFormat(d){
+              if (d === 0) return ''; // No label for '0'
+              else if (d < 0) d = -d; // No nagative labels
+              return d3.format("0")(d);
+            }
 
-            const windYAxis = d3.axisLeft().scale(windYScale);
+            const windXAxis = d3.axisTop().scale(windXScale).tickFormat(absoluteAxisFormat);
+            const g_windXAxis = windGroup.append('g')
+              .attr('class','x axis')
+              .attr("transform", `translate(0,${windHeight/2 - margin.bottom - margin.top})`);
+
+            const windYAxis = d3.axisLeft().scale(windYScale).tickFormat(absoluteAxisFormat);
             const g_windYAxis = windGroup.append('g')
-            .attr('class','y axis')
-            .attr("transform", `translate(${windWidth/2},0)`)
+              .attr('class','y axis')
+              .attr("transform", `translate(${windWidth/2},0)`)
 
 
             const scatterSvg = d3.select('#scatter-plot-content').append('svg')
