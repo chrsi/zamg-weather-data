@@ -383,8 +383,8 @@
                 .attr("points", function(d){
                   return d.map(function(d){
                     let mean = d3.mean(d.values, x => +x.windSpeed);
-                    let x = mean * Math.cos(+d.key*Math.PI/180);
-                    let y = mean * Math.sin(+d.key*Math.PI/180);
+                    let x = mean * Math.cos((+d.key+90)*Math.PI/180);
+                    let y = mean * Math.sin((+d.key+90)*Math.PI/180);
                     return [windXScale(x), windYScale(y)].join(",");
                   }).join(" ");
                 });
