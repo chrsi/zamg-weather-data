@@ -276,7 +276,7 @@ a {
 }
 
 .area {
-  fill: rgba(218, 231, 241, 10);
+  fill: rgb(218, 231, 241);
   stroke: steelblue;
   stroke-width: 1.5px;
 }

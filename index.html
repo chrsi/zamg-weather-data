@@ -223,7 +223,6 @@
                 .attr("dy", ".71em")
                 .style("text-anchor", "end");
 
-
             const windSvg = d3.select('#wind-direction-content').append('svg')
                 .attr('width', windWidth)
                 .attr('height', windHeight);
@@ -292,6 +291,7 @@
                 let allowedButtons = [leftButton, rightButton]; // override filter, default would be only left button
                 return allowedButtons.includes(d3.event.button);
             });
+
             var bandPos = {x: -1, y: -1};
             const moveStartPos = {x1: 0, x2: 0, y1: 0, y2: 0};
             var zoomArea;
