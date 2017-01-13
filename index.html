@@ -245,7 +245,7 @@
             const windXAxis = d3.axisTop().scale(windXScale).tickFormat(absoluteAxisFormat);
             const g_windXAxis = windGroup.append('g')
               .attr('class','x axis')
-              .attr("transform", `translate(0,${windHeight/2 - margin.bottom - margin.top})`);
+              .attr("transform", `translate(0,${windHeight/2})`);
 
             const windYAxis = d3.axisLeft().scale(windYScale).tickFormat(absoluteAxisFormat);
             const g_windYAxis = windGroup.append('g')
