@@ -59,7 +59,9 @@
         <div id="trend-content"></div>
 
         <div class="wrapper">
-            <div id="wind-direction-content"></div>
+            <div id="wind-direction-content">
+              <div>Average wind speed per direction</div>
+            </div>
             <div id="scatter-plot-content">
                 <div class="row">
                     <select id="scatter-x-axis-type">
@@ -190,10 +192,10 @@
             const rightButton = 2;
 
             const trendWidth = 1200 - margin.left - margin.right;
-            const windWidth = 400 - margin.left - margin.right;
+            const windWidth = 360 - margin.left - margin.right;
             const scatterWidth = 600 - margin.left - margin.right;
             const trendHeight = 400 - margin.top - margin.bottom;
-            const windHeight = 400 - margin.top - margin.bottom;
+            const windHeight = 360 - margin.top - margin.bottom;
             const scatterHeight = 350 - margin.top - margin.bottom;
 
             const trendSvg = d3.select('#trend-content').append('svg')
