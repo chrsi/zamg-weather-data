@@ -380,6 +380,58 @@
               g_windXAxis.transition().duration(duration).call(windXAxis);
               g_windYAxis.transition().duration(duration).call(windYAxis);
 
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 10)
+                .attr("y", 15)
+                .attr("font-size", 15)
+                .text("W");
+
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 15)
+                .attr("y", 25)
+                .text("km/h");
+
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", windWidth-10)
+                .attr("y", 15)
+                .attr("font-size", 15)
+                .text("E");
+
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", windWidth-15)
+                .attr("y", 25)
+                .text("km/h");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 15)
+                .attr("y", 15)
+                .attr("font-size", 15)
+                .text("N");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 27)
+                .attr("y", 25)
+                .text("km/h");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 15)
+                .attr("y", windHeight-5)
+                .attr("font-size", 15)
+                .text("S");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 27)
+                .attr("y", windHeight-20)
+                .text("km/h");
+
               const path = windGroupContent.selectAll('polygon.area')
                                            .data([groupedData]);
 
