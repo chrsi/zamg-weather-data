@@ -59,7 +59,9 @@
         <div id="trend-content"></div>
 
         <div class="wrapper">
-            <div id="wind-direction-content"></div>
+            <div id="wind-direction-content">
+              <div>Average wind speed per direction</div>
+            </div>
             <div id="scatter-plot-content">
                 <div class="row">
                     <select id="scatter-x-axis-type">
@@ -190,10 +192,10 @@
             const rightButton = 2;
 
             const trendWidth = 1200 - margin.left - margin.right;
-            const windWidth = 400 - margin.left - margin.right;
+            const windWidth = 360 - margin.left - margin.right;
             const scatterWidth = 600 - margin.left - margin.right;
             const trendHeight = 400 - margin.top - margin.bottom;
-            const windHeight = 400 - margin.top - margin.bottom;
+            const windHeight = 360 - margin.top - margin.bottom;
             const scatterHeight = 350 - margin.top - margin.bottom;
 
             const trendSvg = d3.select('#trend-content').append('svg')
@@ -223,7 +225,6 @@
                 .attr("dy", ".71em")
                 .style("text-anchor", "end");
 
-
             const windSvg = d3.select('#wind-direction-content').append('svg')
                 .attr('width', windWidth)
                 .attr('height', windHeight);
@@ -235,15 +236,21 @@
 
             const windGroupContent = windGroup.append('g');
 
-            const windXAxis = d3.axisTop().scale(windXScale);
-            const g_windXAxis = windGroup.append('g')
-            .attr('class','x axis')
-            .attr("transform", `translate(0,${windHeight/2 - margin.bottom - margin.top})`);
+            function absoluteAxisFormat(d){
+              if (d === 0) return ''; // No label for '0'
+              else if (d < 0) d = -d; // No nagative labels
+              return d3.format("0")(d);
+            }
 
-            const windYAxis = d3.axisLeft().scale(windYScale);
+            const windXAxis = d3.axisTop().scale(windXScale).tickFormat(absoluteAxisFormat);
+            const g_windXAxis = windGroup.append('g')
+              .attr('class','x axis')
+              .attr("transform", `translate(0,${windHeight/2})`);
+
+            const windYAxis = d3.axisLeft().scale(windYScale).tickFormat(absoluteAxisFormat);
             const g_windYAxis = windGroup.append('g')
-            .attr('class','y axis')
-            .attr("transform", `translate(${windWidth/2},0)`)
+              .attr('class','y axis')
+              .attr("transform", `translate(${windWidth/2},0)`)
 
 
             const scatterSvg = d3.select('#scatter-plot-content').append('svg')
@@ -292,6 +299,7 @@
                 let allowedButtons = [leftButton, rightButton]; // override filter, default would be only left button
                 return allowedButtons.includes(d3.event.button);
             });
+
             var bandPos = {x: -1, y: -1};
             const moveStartPos = {x1: 0, x2: 0, y1: 0, y2: 0};
             var zoomArea;
@@ -371,6 +379,58 @@
 
               g_windXAxis.transition().duration(duration).call(windXAxis);
               g_windYAxis.transition().duration(duration).call(windYAxis);
+
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 10)
+                .attr("y", 15)
+                .attr("font-size", 15)
+                .text("W");
+
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 15)
+                .attr("y", 25)
+                .text("km/h");
+
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", windWidth-10)
+                .attr("y", 15)
+                .attr("font-size", 15)
+                .text("E");
+
+              g_windXAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", windWidth-15)
+                .attr("y", 25)
+                .text("km/h");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 15)
+                .attr("y", 15)
+                .attr("font-size", 15)
+                .text("N");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 27)
+                .attr("y", 25)
+                .text("km/h");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 15)
+                .attr("y", windHeight-5)
+                .attr("font-size", 15)
+                .text("S");
+
+              g_windYAxis.append("text")
+                .attr("fill", "black")
+                .attr("x", 27)
+                .attr("y", windHeight-20)
+                .text("km/h");
 
               const path = windGroupContent.selectAll('polygon.area')
                                            .data([groupedData]);

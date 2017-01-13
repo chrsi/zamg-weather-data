@@ -262,7 +262,8 @@ a {
 }
 
 #wind-direction-content {
-  flex: 0 0 50%;
+  flex: 0 0 40%;
+  margin-left: 50px;
 }
 
 #scatter-plot-content {
@@ -276,7 +277,7 @@ a {
 }
 
 .area {
-  fill: rgba(218, 231, 241, 10);
+  fill: rgb(218, 231, 241);
   stroke: steelblue;
   stroke-width: 1.5px;
 }
