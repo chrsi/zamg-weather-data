@@ -190,10 +190,10 @@
             const rightButton = 2;
 
             const trendWidth = 1200 - margin.left - margin.right;
-            const windWidth = 600 - margin.left - margin.right;
+            const windWidth = 400 - margin.left - margin.right;
             const scatterWidth = 600 - margin.left - margin.right;
             const trendHeight = 400 - margin.top - margin.bottom;
-            const windHeight = 350 - margin.top - margin.bottom;
+            const windHeight = 400 - margin.top - margin.bottom;
             const scatterHeight = 350 - margin.top - margin.bottom;
 
             const trendSvg = d3.select('#trend-content').append('svg')
@@ -229,9 +229,22 @@
                 .attr('height', windHeight);
 
             const windGroup = windSvg.append('g')
-                .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-            // TODO: add wind x,y scale; add wind x,y axis, add wind g_x, g_y axis
+            const windXScale = d3.scaleLinear().range([0,windWidth]);
+            const windYScale = d3.scaleLinear().range([windHeight,0]);
+
+            const windGroupContent = windGroup.append('g');
+
+            const windXAxis = d3.axisTop().scale(windXScale);
+            const g_windXAxis = windGroup.append('g')
+            .attr('class','x axis')
+            .attr("transform", `translate(0,${windHeight/2 - margin.bottom - margin.top})`);
+
+            const windYAxis = d3.axisLeft().scale(windYScale);
+            const g_windYAxis = windGroup.append('g')
+            .attr('class','y axis')
+            .attr("transform", `translate(${windWidth/2},0)`)
+
 
             const scatterSvg = d3.select('#scatter-plot-content').append('svg')
                 .attr('width', scatterWidth)
@@ -340,8 +353,44 @@
             function updateAllPlots(newData, selectorFunc, duration) {
                 updateTrend(newData, selectorFunc, duration);
                 updateScatterPlot(newData, duration);
+                updateWindPlot(newData, duration);
             }
 
+            function updateWindPlot(newData, duration){
+              const selectedData = newData.filter(d => d.date >= zoomArea.x1 && d.date <= zoomArea.x2);
+              const groupedData = d3.nest()
+                       .key(d => d.windDirection)
+                       .entries(selectedData)
+                       .filter(d => !isNaN(+d.key))
+                       .sort((a,b) => d3.ascending(+a.key, +b.key));
+
+              var max = d3.max(groupedData, d => d3.mean(d.values, x => +x.windSpeed));
+
+              windXScale.domain([-max, max]);
+              windYScale.domain([-max, max]);
+
+              g_windXAxis.transition().duration(duration).call(windXAxis);
+              g_windYAxis.transition().duration(duration).call(windYAxis);
+
+              const path = windGroupContent.selectAll('polygon.area')
+                                           .data([groupedData]);
+
+              const path_enter = path.enter().append('polygon')
+                .attr("class", "area")
+                .attr("clip-path", "url(#clip)");
+
+              path.merge(path_enter).transition().duration(duration)
+                .attr("points", function(d){
+                  return d.map(function(d){
+                    let mean = d3.mean(d.values, x => +x.windSpeed);
+                    let x = mean * Math.cos((+d.key+90)*Math.PI/180);
+                    let y = mean * Math.sin((+d.key+90)*Math.PI/180);
+                    return [windXScale(x), windYScale(y)].join(",");
+                  }).join(" ");
+                });
+
+              path.exit().remove();
+            }
             function updateTrend(newData, selectorFunc, duration) {
                 if (zoomArea.x1 > zoomArea.x2) {
                     trendXScale.domain([zoomArea.x2, zoomArea.x1]);
