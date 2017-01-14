@@ -46,7 +46,7 @@ The right mouse button can be used to translate the diagram and browse around th
 
 The data used by the scatter plot can be chosen using the two dropdown lists at the top of the diagram.
 
-![Interaction](http://i.imgur.com/noNEjJ6.gif)
+![Interaction](https://meinsiedler.github.io/zamg-weather-data/assets/img/selection.gif)
 
 ## Insight / Conclusion
 
