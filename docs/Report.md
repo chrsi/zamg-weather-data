@@ -37,7 +37,7 @@ The last diagram shows the relationship between two chosen attributes in a scatt
 
 The GitHub page is split up into those three sections. The first one is the line chart where a date range can be selected. This selection also affects the other two charts. The circle area chart showing the average wind speed is located in the bottom left section. Next to it, the scatter plot shows the relationship between two selected attributes.
 
-![Visual Design](http://i.imgur.com/uYnMcDk.png)
+![Visual Design](https://meinsiedler.github.io/zamg-weather-data/assets/img/layout.png)
 
 ## Prototype Interaction
 
