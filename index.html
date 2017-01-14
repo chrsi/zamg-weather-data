@@ -188,6 +188,12 @@
                 d3.select(`#scatter-y-axis-type option[value='${selectedXAxisValue}']`).attr("disabled", "disabled");
             }
 
+            function absoluteAxisFormat(d){
+                if (d === 0) return ''; // No label for '0'
+                else if (d < 0) d = -d; // No negative labels
+                return d3.format("0")(d);
+            }
+
             fillTypeSelect("#trend-type-select");
             fillTypeSelect("#scatter-x-axis-type");
             fillTypeSelect("#scatter-y-axis-type");
@@ -238,18 +244,12 @@
                 .attr('width', windWidth)
                 .attr('height', windHeight);
 
-            const windGroup = windSvg.append('g')
+            const windGroup = windSvg.append('g');
 
             const windXScale = d3.scaleLinear().range([0,windWidth]);
             const windYScale = d3.scaleLinear().range([windHeight,0]);
 
             const windGroupContent = windGroup.append('g');
-
-            function absoluteAxisFormat(d){
-              if (d === 0) return ''; // No label for '0'
-              else if (d < 0) d = -d; // No nagative labels
-              return d3.format("0")(d);
-            }
 
             const windXAxis = d3.axisTop().scale(windXScale).tickFormat(absoluteAxisFormat);
             const g_windXAxis = windGroup.append('g')
@@ -259,8 +259,26 @@
             const windYAxis = d3.axisLeft().scale(windYScale).tickFormat(absoluteAxisFormat);
             const g_windYAxis = windGroup.append('g')
               .attr('class','y axis')
-              .attr("transform", `translate(${windWidth/2},0)`)
+              .attr("transform", `translate(${windWidth/2},0)`);
 
+            function appendAxisLabel(axis, x, y, text, fontSize) {
+                axis.append("text")
+                    .attr("fill", "black")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("font-size", fontSize)
+                    .text(text);
+            }
+
+            appendAxisLabel(g_windXAxis, 10, 15, "W", 15);
+            appendAxisLabel(g_windXAxis, 10, 25, "km/h", 10);
+            appendAxisLabel(g_windXAxis, windWidth-10, 15, "E", 15);
+            appendAxisLabel(g_windXAxis, windWidth-15, 25, "km/h", 10);
+
+            appendAxisLabel(g_windYAxis, 15, 15, "N", 15);
+            appendAxisLabel(g_windYAxis, 27, 25, "km/h", 10);
+            appendAxisLabel(g_windYAxis, 15, windHeight-5, "S", 15);
+            appendAxisLabel(g_windYAxis, 27, windHeight-20, "km/h", 10);
 
             const scatterSvg = d3.select('#scatter-plot-content').append('svg')
                 .attr('width', scatterWidth)
@@ -351,7 +369,6 @@
                 d3.select("#reset-zoom-button").attr("disabled", userAppliedZoom ? null : "disabled")
             }
 
-            // TODO: handle missing values better than with 0 as default value
             function convertToNumber(row, selectorFunc, defaultValue) {
                 let value = selectorFunc(row);
                 return value === undefined ? defaultValue : +value;
@@ -369,97 +386,11 @@
 
             function updateAllPlots(newData, selectorFunc, duration) {
                 updateTrend(newData, selectorFunc, duration);
-                updateScatterPlot(newData, duration);
                 updateWindPlot(newData, duration);
+                updateScatterPlot(newData, duration);
             }
 
-            function updateWindPlot(newData, duration){
-              const selectedData = newData.filter(d => d.date >= zoomArea.x1 && d.date <= zoomArea.x2);
-              const groupedData = d3.nest()
-                       .key(d => d.windDirection)
-                       .entries(selectedData)
-                       .filter(d => !isNaN(+d.key))
-                       .sort((a,b) => d3.ascending(+a.key, +b.key));
 
-              var max = d3.max(groupedData, d => d3.mean(d.values, x => +x.windSpeed));
-
-              windXScale.domain([-max, max]);
-              windYScale.domain([-max, max]);
-
-              g_windXAxis.transition().duration(duration).call(windXAxis);
-              g_windYAxis.transition().duration(duration).call(windYAxis);
-
-              g_windXAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", 10)
-                .attr("y", 15)
-                .attr("font-size", 15)
-                .text("W");
-
-              g_windXAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", 15)
-                .attr("y", 25)
-                .text("km/h");
-
-              g_windXAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", windWidth-10)
-                .attr("y", 15)
-                .attr("font-size", 15)
-                .text("E");
-
-              g_windXAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", windWidth-15)
-                .attr("y", 25)
-                .text("km/h");
-
-              g_windYAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", 15)
-                .attr("y", 15)
-                .attr("font-size", 15)
-                .text("N");
-
-              g_windYAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", 27)
-                .attr("y", 25)
-                .text("km/h");
-
-              g_windYAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", 15)
-                .attr("y", windHeight-5)
-                .attr("font-size", 15)
-                .text("S");
-
-              g_windYAxis.append("text")
-                .attr("fill", "black")
-                .attr("x", 27)
-                .attr("y", windHeight-20)
-                .text("km/h");
-
-              const path = windGroupContent.selectAll('polygon.area')
-                                           .data([groupedData]);
-
-              const path_enter = path.enter().append('polygon')
-                .attr("class", "area")
-                .attr("clip-path", "url(#clip)");
-
-              path.merge(path_enter).transition().duration(duration)
-                .attr("points", function(d){
-                  return d.map(function(d){
-                    let mean = d3.mean(d.values, x => +x.windSpeed);
-                    let x = mean * Math.cos((+d.key+90)*Math.PI/180);
-                    let y = mean * Math.sin((+d.key+90)*Math.PI/180);
-                    return [windXScale(x), windYScale(y)].join(",");
-                  }).join(" ");
-                });
-
-              path.exit().remove();
-            }
             function updateTrend(newData, selectorFunc, duration) {
                 if (zoomArea.x1 > zoomArea.x2) {
                     trendXScale.domain([zoomArea.x2, zoomArea.x1]);
@@ -485,6 +416,41 @@
 
                 path.merge(path_enter).transition().duration(duration)
                     .attr("d", getScaledLine(selectorFunc));
+
+                path.exit().remove();
+            }
+
+            function updateWindPlot(newData, duration){
+                const selectedData = newData.filter(d => d.date >= zoomArea.x1 && d.date <= zoomArea.x2);
+                const groupedData = d3.nest()
+                    .key(d => d.windDirection)
+                    .entries(selectedData)
+                    .sort((a,b) => d3.ascending(+a.key, +b.key));
+
+                var max = d3.max(groupedData, d => d3.mean(d.values, x => x.windSpeed));
+
+                windXScale.domain([-max, max]);
+                windYScale.domain([-max, max]);
+
+                g_windXAxis.transition().duration(duration).call(windXAxis);
+                g_windYAxis.transition().duration(duration).call(windYAxis);
+
+                const path = windGroupContent.selectAll('polygon.area')
+                    .data([groupedData]);
+
+                const path_enter = path.enter().append('polygon')
+                    .attr("class", "area")
+                    .attr("clip-path", "url(#clip)");
+
+                path.merge(path_enter).transition().duration(duration)
+                    .attr("points", function(d){
+                        return d.map(function(d){
+                            let mean = d3.mean(d.values, x => +x.windSpeed);
+                            let x = mean * Math.cos((+d.key+90)*Math.PI/180);
+                            let y = mean * Math.sin((+d.key+90)*Math.PI/180);
+                            return [windXScale(x), windYScale(y)].join(",");
+                        }).join(" ");
+                    });
 
                 path.exit().remove();
             }
