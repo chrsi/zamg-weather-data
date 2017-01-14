@@ -123,6 +123,15 @@
                     }
                 },
                 {
+                    value: "windDirection",
+                    text: "Wind Direction",
+                    unit: "°",
+                    convert: row => {
+                        row.windDirection = convertToNumber(row, r => r.windDirection, 0);
+                        return row;
+                    }
+                },
+                {
                     value: "rain",
                     text: "Rain",
                     unit: "l/m²",
