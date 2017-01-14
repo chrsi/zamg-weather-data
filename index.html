@@ -114,11 +114,11 @@
                     }
                 },
                 {
-                    value: "peekWindSpeed",
-                    text: "Peek Wind Speed",
+                    value: "peakWindSpeed",
+                    text: "Peak Wind Speed",
                     unit: "km/h",
                     convert: row => {
-                        row.peekWindSpeed = convertToNumber(row, r => r.peekWindSpeed, 0);
+                        row.peakWindSpeed = convertToNumber(row, r => r.peakWindSpeed, 0);
                         return row;
                     }
                 },
@@ -197,7 +197,8 @@
             fillTypeSelect("#trend-type-select");
             fillTypeSelect("#scatter-x-axis-type");
             fillTypeSelect("#scatter-y-axis-type");
-            d3.select("#scatter-y-axis-type").property("value", "rain");
+            d3.select("#scatter-x-axis-type").property("value", "windSpeed");
+            d3.select("#scatter-y-axis-type").property("value", "peakWindSpeed");
             updateDisabledScatterOptions();
 
             const margin = {top: 2, bottom: 1, left: 35, right: 0};
