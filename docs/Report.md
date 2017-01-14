@@ -50,6 +50,12 @@ The data used by the scatter plot can be chosen using the two dropdown lists at 
 
 ## Insight / Conclusion
 
+D3 is a powerful tool for visualizing small-to-medium sized sets of data. Especially usefull are the mathematical functions (like max, mean, median, ...), that D3 provides out of the box.
+
+The more calculations you run on the data, the slower the animations will be. This already shows an impact with our 600kb file. One thing to mention here is, that we had to run some quite expensive operations on it (e.g. double-iteration of the data set for the average wind speed).
+
+With little knowledge of JavaScript, HTML and SVG, D3 is very handy for quickly visualizing data and its relationships.
+
 ## How to Start
 
 The project is hosted under <https://meinsiedler.github.io/zamg-weather-data/>.
