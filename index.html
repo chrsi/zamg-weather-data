@@ -372,7 +372,11 @@
 
             function convertToNumber(row, selectorFunc, defaultValue) {
                 let value = selectorFunc(row);
-                return value === undefined ? defaultValue : +value;
+                if(value === undefined) {
+                    console.warn(`A missing for ${selectorFunc} was detected on ${row.date.toISOString()}.`);
+                    return defaultValue;
+                }
+                return +value;
             }
 
             function initAllPlots(newData, selectorFunc) {
